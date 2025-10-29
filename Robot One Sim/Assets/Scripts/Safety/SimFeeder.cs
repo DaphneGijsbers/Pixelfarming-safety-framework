@@ -1,12 +1,13 @@
 using UnityEngine;
 using Safety;
 
+[RequireComponent(typeof(Rigidbody))]
 public class SimFeeder : MonoBehaviour
 {
     [Header("Raycast settings")]
-        [SerializeField] float rayOriginHeight = 0.2f;   // beetje boven de grond
-        [SerializeField] float rayMaxDistance = 20f;     // hoe ver vooruit kijken
-        [SerializeField] LayerMask obstacleLayers = ~0;
+    [SerializeField] float rayOriginHeight = 0.2f;
+    [SerializeField] float rayMaxDistance = 20f;
+    [SerializeField] LayerMask obstacleLayers = ~0;
 
     IMediator mediator;
     Rigidbody rb;
@@ -15,23 +16,34 @@ public class SimFeeder : MonoBehaviour
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        cfg = new SafetyConfig();
+        cfg = new SafetyConfig { obstacle_stop_m = 5.0 }; // stop bij 5 m
         mediator = new Mediator(cfg);
         mediator.AttachSafetyKernel(new SafetyKernel());
+
+        // Sluit Robot (gate + actuator) aan als port
+        var robot = GetComponent<Safety.Robot>();
+        if (robot != null) {
+            mediator.AttachRobotPort(robot);
+            Debug.Log("[SimFeeder] Attached Robot port");
+        } else {
+            Debug.LogWarning("[SimFeeder] No Safety.Robot component found on this GameObject.");
+        }
     }
 
     void FixedUpdate()
     {
         var s = BuildSimSnapshot();
+
+        // Debug input naar mediator
+        // Debug.Log($"[SimFeeder] snapshot obstacle={s.nearest_obstacle_m:0.00} m");
+
         RobotCommand cmd = mediator.ProcessSensorData(s);
 
+        // Debug output van mediator
+        // Debug.Log($"[SimFeeder] cmd={cmd.decision} cap={cmd.speed_cap_mps:0.00} estop={cmd.estop} reasons=[{string.Join(",", cmd.reasons)}]");
+
         if (s.nearest_obstacle_m <= cfg.obstacle_stop_m)
-            {
-                // Exacte tekst:
-                //Debug.Log("Obstacle detected 5 meters");
-                // Of met gemeten waarde:
-                // Debug.Log($"Obstacle detected {snap.nearest_obstacle_m:0.0} meters");
-            }
+            Debug.Log("Obstacle detected 5 meters");
     }
 
     SensorSnapshot BuildSimSnapshot()
@@ -41,11 +53,8 @@ public class SimFeeder : MonoBehaviour
 
         float distance = 999f;
         if (Physics.Raycast(origin, dir, out var hit, rayMaxDistance, obstacleLayers, QueryTriggerInteraction.Ignore))
-        {
             distance = hit.distance;
-        }
 
-        // Bouw snapshot
         return new SensorSnapshot
         {
             timestamp_s = Time.timeAsDouble,
@@ -53,15 +62,11 @@ public class SimFeeder : MonoBehaviour
             y = transform.position.z,
             heading_rad = transform.eulerAngles.y * Mathf.Deg2Rad,
             speed_mps = rb ? rb.linearVelocity.magnitude : 0f,
-
             nearest_obstacle_m = distance,
-
-            // Defaults; pas aan als je meer simulatiebronnen toevoegt:
             nearest_human_m = 999,
             inside_geofence = true,
             distance_to_boundary_m = 999,
-            roll_deg = 0,
-            pitch_deg = 0,
+            roll_deg = 0, pitch_deg = 0,
             stability_warning = false,
             tool_requested_active = false,
             tool_hw_interlock_ok = true,
@@ -69,10 +74,11 @@ public class SimFeeder : MonoBehaviour
             estop_pressed = false
         };
     }
+
     void OnDrawGizmosSelected()
-        {
-            Gizmos.color = Color.yellow;
-            Vector3 origin = transform.position + Vector3.up * rayOriginHeight;
-            Gizmos.DrawLine(origin, origin + transform.forward * rayMaxDistance);
-        }
+    {
+        Gizmos.color = Color.yellow;
+        Vector3 origin = transform.position + Vector3.up * rayOriginHeight;
+        Gizmos.DrawLine(origin, origin + transform.forward * rayMaxDistance);
+    }
 }

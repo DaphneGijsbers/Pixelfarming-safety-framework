@@ -398,6 +398,7 @@ GameObject:
   - component: {fileID: 737554539}
   - component: {fileID: 737554538}
   - component: {fileID: 737554544}
+  - component: {fileID: 737554545}
   m_Layer: 0
   m_Name: Robot
   m_TagString: Untagged
@@ -432,6 +433,7 @@ MonoBehaviour:
   kHeadingD: 0.2
   drawGizmos: 1
   debugAngles: 0
+  safetyRobot: {fileID: 0}
 --- !u!54 &737554539
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -568,6 +570,21 @@ MonoBehaviour:
   obstacleLayers:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &737554545
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 737554537}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8bb0fd34e5861a447b99e83580cf9636, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Safety.Robot
+  rb: {fileID: 737554539}
+  agent: {fileID: 0}
+  logDebug: 1
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0

@@ -18,24 +18,8 @@ namespace Safety
             this.kernel.Init(cfg);
         }
 
-        bool logChain = true; // aan/uit schakelaar voor debug
-
-        static string DebugSafetyResult(SafetyResult r)
-        {
-            return $"[SafetyChain] decision={r.decision} speed_limit={r.speed_limit_mps:0.00} " +
-                   $"actions=[{string.Join(",", r.actions)}] reasons=[{string.Join(",", r.reasons)}]";
-        }
-
-        static string DebugRobotCommand(RobotCommand c)
-        {
-            return $"[Mediator→Robot] cmd={c.decision} cap={c.speed_cap_mps:0.00} " +
-                   $"estop={c.estop} reasons=[{string.Join(",", c.reasons)}]";
-        }
-
-
         public RobotCommand ProcessSensorData(SensorSnapshot s)
         {
-            // --- 1) Bypass regels ---
             bool trivialSafe =
                 !s.estop_pressed &&
                 s.nearest_human_m > cfg.ssm_slowdown_m &&
@@ -54,10 +38,10 @@ namespace Safety
                     tool_enable = true
                 };
                 robotPort?.Apply(cmd);
+                //Debug.Log(cmd);
                 return cmd;
             }
 
-            // --- 2) Anders: via SafetyKernel (Chain) ---
             var safety = kernel.Evaluate(s);
 
             var routed = new RobotCommand
@@ -70,6 +54,8 @@ namespace Safety
             };
 
             robotPort?.Apply(routed);
+            //Debug.Log(routed);
+            
             return routed;
         }
     }

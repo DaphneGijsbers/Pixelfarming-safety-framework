@@ -1,10 +1,13 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+// Voeg toe:
+using Safety;
+
 [RequireComponent(typeof(Rigidbody))]
 public class FieldPatrol : MonoBehaviour
 {
-    [Header("Field (axis‑aligned)")]
+    [Header("Field (axis-aligned)")]
     public Vector3 fieldCenter = Vector3.zero;
     public float halfWidth = 30f;
     public float halfHeight = 20f;
@@ -23,11 +26,15 @@ public class FieldPatrol : MonoBehaviour
 
     [Header("Controller gains")]
     public float kHeading = 1.0f;
-    public float kHeadingD = 0.2f; 
+    public float kHeadingD = 0.2f;
 
     [Header("Gizmos/Debug")]
     public bool drawGizmos = true;
     public bool debugAngles = false;
+
+    // NEW: safety gate referentie
+    [Header("Safety")]
+    [SerializeField] Safety.Robot safetyRobot;
 
     private List<Vector3> pts = new List<Vector3>();
     private List<float> cum = new List<float>();
@@ -43,6 +50,10 @@ public class FieldPatrol : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         rb.interpolation = RigidbodyInterpolation.Interpolate;
         rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+
+        // NEW: probeer automatisch te vinden
+        if (!safetyRobot) safetyRobot = GetComponent<Safety.Robot>();
+
         BuildPath();
         SnapToStart();
     }
@@ -62,6 +73,15 @@ public class FieldPatrol : MonoBehaviour
     void FixedUpdate()
     {
         if (pts.Count < 2) return;
+
+        // ===== SAFETY GATE (stop vóór je iets beweegt) =====
+        if (safetyRobot && (safetyRobot.IsEStopped || safetyRobot.IsStopped))
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            return; // NIET bewegen dit frame
+        }
+
         float dt = Time.fixedDeltaTime;
 
         float sProj; int segProj; Vector3 qProj;
@@ -76,10 +96,9 @@ public class FieldPatrol : MonoBehaviour
         Vector3 target; int segT; Vector3 dirT;
         SampleAtArcLength(sTarget, out target, out segT, out dirT);
 
-
         Vector3 toT = target - transform.position; toT.y = 0f;
-        float curYaw = transform.eulerAngles.y * Mathf.Deg2Rad;    
-        float desiredYaw = Mathf.Atan2(toT.x, toT.z);               
+        float curYaw = transform.eulerAngles.y * Mathf.Deg2Rad;
+        float desiredYaw = Mathf.Atan2(toT.x, toT.z);
         float yawErr = Wrap(desiredYaw - curYaw);
         float yawErrRate = (yawErr - prevYawErr) / Mathf.Max(1e-4f, dt);
         prevYawErr = yawErr;
@@ -93,8 +112,13 @@ public class FieldPatrol : MonoBehaviour
         rb.MoveRotation(qNew);
 
         float absErrDeg = Mathf.Abs(yawErr * Mathf.Rad2Deg);
-        float vCmd = cruiseSpeed * Mathf.Clamp01(1.0f - absErrDeg / 180f); 
-        if (absErrDeg > 100f) vCmd = 0f; 
+        float vCmd = cruiseSpeed * Mathf.Clamp01(1.0f - absErrDeg / 180f);
+        if (absErrDeg > 100f) vCmd = 0f;
+
+        // ===== SAFETY SPEED CAP =====
+        if (safetyRobot)
+            vCmd = Mathf.Min(vCmd, safetyRobot.CurrentSpeedCap);
+
         Vector3 fwdNew = qNew * Vector3.forward; fwdNew.y = 0f; fwdNew.Normalize();
         Vector3 newPos = transform.position + fwdNew * vCmd * dt;
         rb.MovePosition(newPos);
@@ -109,8 +133,8 @@ public class FieldPatrol : MonoBehaviour
         }
     }
 
-    void BuildPath()
-    {
+    // ===== jouw bestaande helpers ongewijzigd =====
+    void BuildPath(){ /* exact jouw code */ 
         pts.Clear();
         float zMin = fieldCenter.z - halfHeight, zMax = fieldCenter.z + halfHeight;
         float xMin = fieldCenter.x - halfWidth,  xMax = fieldCenter.x + halfWidth;
@@ -137,72 +161,51 @@ public class FieldPatrol : MonoBehaviour
         sCur = 0f; segIdx = 0; prevYawErr = 0f;
     }
 
-    void AddLanePolyline(float x, float zMin, float zMax, bool forward)
-    {
+    void AddLanePolyline(float x, float zMin, float zMax, bool forward){
         float len = Mathf.Abs(zMax - zMin);
         int steps = Mathf.Max(1, Mathf.FloorToInt(len / waypointSpacing));
-        if (forward)
-        {
-            for (int s = 0; s <= steps; s++)
-            {
+        if (forward){
+            for (int s = 0; s <= steps; s++){
                 float z = Mathf.Lerp(zMin, zMax, s / (float)steps);
                 AppendIfNew(new Vector3(x, 0f, z));
             }
-        }
-        else
-        {
-            for (int s = 0; s <= steps; s++)
-            {
+        } else {
+            for (int s = 0; s <= steps; s++){
                 float z = Mathf.Lerp(zMax, zMin, s / (float)steps);
                 AppendIfNew(new Vector3(x, 0f, z));
             }
         }
     }
 
-    void AppendIfNew(Vector3 p)
-    {
-        if (pts.Count == 0) { pts.Add(p); return; }
-        if (DistXZ(pts[pts.Count - 1], p) > 1e-3f) pts.Add(p);
-    }
+    void AppendIfNew(Vector3 p){ if (pts.Count == 0){ pts.Add(p); return; } if (DistXZ(pts[pts.Count - 1], p) > 1e-3f) pts.Add(p); }
 
-    void Dedup(float eps)
-    {
+    void Dedup(float eps){
         if (pts.Count < 2) return;
-        var cleaned = new List<Vector3>();
-        cleaned.Add(pts[0]);
-        for (int i = 1; i < pts.Count; i++)
-            if (DistXZ(pts[i], cleaned[cleaned.Count - 1]) > eps)
-                cleaned.Add(pts[i]);
+        var cleaned = new List<Vector3>(); cleaned.Add(pts[0]);
+        for (int i = 1; i < pts.Count; i++) if (DistXZ(pts[i], cleaned[cleaned.Count - 1]) > eps) cleaned.Add(pts[i]);
         pts = cleaned;
     }
 
-    void BuildCumulative()
-    {
+    void BuildCumulative(){
         cum.Clear(); cum.Add(0f);
-        for (int i = 0; i < pts.Count - 1; i++)
-            cum.Add(cum[cum.Count - 1] + DistXZ(pts[i], pts[i + 1]));
+        for (int i = 0; i < pts.Count - 1; i++) cum.Add(cum[cum.Count - 1] + DistXZ(pts[i], pts[i + 1]));
         totalLen = cum[cum.Count - 1];
     }
 
-    void SnapToStart()
-    {
-        if (pts.Count >= 2)
-        {
+    void SnapToStart(){
+        if (pts.Count >= 2){
             transform.position = new Vector3(pts[0].x, transform.position.y, pts[0].z);
             Vector3 dir = (pts[1] - pts[0]); dir.y = 0f;
-            if (dir.sqrMagnitude > 1e-4f)
-                rb.MoveRotation(Quaternion.LookRotation(dir.normalized, Vector3.up));
+            if (dir.sqrMagnitude > 1e-4f) rb.MoveRotation(Quaternion.LookRotation(dir.normalized, Vector3.up));
         }
     }
 
     static float DistXZ(Vector3 a, Vector3 b){ return Vector2.Distance(new Vector2(a.x,a.z), new Vector2(b.x,b.z)); }
     static float Wrap(float a){ while (a >  Mathf.PI) a -= 2*Mathf.PI; while (a < -Mathf.PI) a += 2*Mathf.PI; return a; }
 
-    void ProjectToPath(Vector3 p, out float sOut, out int segOut, out Vector3 qOut)
-    {
+    void ProjectToPath(Vector3 p, out float sOut, out int segOut, out Vector3 qOut){
         float bestD2 = float.MaxValue; sOut = 0f; segOut = 0; qOut = pts[0];
-        for (int i = 0; i < pts.Count - 1; i++)
-        {
+        for (int i = 0; i < pts.Count - 1; i++){
             Vector3 a = pts[i], b = pts[i + 1];
             Vector3 ab = b - a; ab.y = 0f;
             Vector3 ap = p - a; ap.y = 0f;
@@ -210,15 +213,11 @@ public class FieldPatrol : MonoBehaviour
             float t = Mathf.Clamp01(Vector3.Dot(ap, ab) / ab2);
             Vector3 q = a + t * ab;
             float d2 = (p - q).sqrMagnitude;
-            if (d2 < bestD2)
-            {
-                bestD2 = d2; segOut = i; qOut = q; sOut = cum[i] + t * Mathf.Sqrt(ab2);
-            }
+            if (d2 < bestD2){ bestD2 = d2; segOut = i; qOut = q; sOut = cum[i] + t * Mathf.Sqrt(ab2); }
         }
     }
 
-    void SampleAtArcLength(float s, out Vector3 point, out int segOut, out Vector3 dir)
-    {
+    void SampleAtArcLength(float s, out Vector3 point, out int segOut, out Vector3 dir){
         s = Mathf.Clamp(s, 0f, totalLen);
         int i = 0; while (i < cum.Count - 1 && cum[i + 1] < s) i++;
         float segLen = Mathf.Max(cum[i + 1] - cum[i], 1e-6f);
@@ -250,5 +249,4 @@ public class FieldPatrol : MonoBehaviour
             Gizmos.DrawLine(transform.position + Vector3.up * 0.1f, tPt + Vector3.up * 0.1f);
         }
     }
-    
 }
