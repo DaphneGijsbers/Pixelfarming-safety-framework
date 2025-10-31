@@ -1,7 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-// Voeg toe:
 using Safety;
 
 [RequireComponent(typeof(Rigidbody))]
@@ -32,7 +31,6 @@ public class FieldPatrol : MonoBehaviour
     public bool drawGizmos = true;
     public bool debugAngles = false;
 
-    // NEW: safety gate referentie
     [Header("Safety")]
     [SerializeField] Safety.Robot safetyRobot;
 
@@ -51,7 +49,6 @@ public class FieldPatrol : MonoBehaviour
         rb.interpolation = RigidbodyInterpolation.Interpolate;
         rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
 
-        // NEW: probeer automatisch te vinden
         if (!safetyRobot) safetyRobot = GetComponent<Safety.Robot>();
 
         BuildPath();
@@ -74,12 +71,11 @@ public class FieldPatrol : MonoBehaviour
     {
         if (pts.Count < 2) return;
 
-        // ===== SAFETY GATE (stop vóór je iets beweegt) =====
         if (safetyRobot && (safetyRobot.IsEStopped || safetyRobot.IsStopped))
         {
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
-            return; // NIET bewegen dit frame
+            return; 
         }
 
         float dt = Time.fixedDeltaTime;
@@ -115,7 +111,6 @@ public class FieldPatrol : MonoBehaviour
         float vCmd = cruiseSpeed * Mathf.Clamp01(1.0f - absErrDeg / 180f);
         if (absErrDeg > 100f) vCmd = 0f;
 
-        // ===== SAFETY SPEED CAP =====
         if (safetyRobot)
             vCmd = Mathf.Min(vCmd, safetyRobot.CurrentSpeedCap);
 
@@ -133,8 +128,9 @@ public class FieldPatrol : MonoBehaviour
         }
     }
 
-    // ===== jouw bestaande helpers ongewijzigd =====
-    void BuildPath(){ /* exact jouw code */ 
+
+    void BuildPath()
+    { 
         pts.Clear();
         float zMin = fieldCenter.z - halfHeight, zMax = fieldCenter.z + halfHeight;
         float xMin = fieldCenter.x - halfWidth,  xMax = fieldCenter.x + halfWidth;

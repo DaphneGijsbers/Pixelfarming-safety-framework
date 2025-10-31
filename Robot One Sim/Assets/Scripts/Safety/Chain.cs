@@ -4,11 +4,11 @@ using System;
 namespace Safety
 {
     public interface ISafetyHandler {
-        /// Return true als dit een finale beslissing is en de chain mag stoppen.
+        
         bool Handle(SensorSnapshot s, SafetyResult r, SafetyKernel kernel);
     }
 
-    // Voorbeeldhandlers (vul aan naar jouw HARA)
+    //Different handlers add here
     public sealed class HumanHandler : ISafetyHandler {
         public bool Handle(SensorSnapshot s, SafetyResult r, SafetyKernel k) {
             var c = k.Config;

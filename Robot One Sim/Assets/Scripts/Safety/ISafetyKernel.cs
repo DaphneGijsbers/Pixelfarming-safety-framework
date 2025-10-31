@@ -6,6 +6,6 @@ namespace Safety
     {
         bool Init(SafetyConfig cfg);
         void Shutdown();
-        SafetyResult Evaluate(SensorSnapshot snapshot); // enkelvoudige call: input -> result
+        SafetyResult Evaluate(SensorSnapshot snapshot); 
     }
 }

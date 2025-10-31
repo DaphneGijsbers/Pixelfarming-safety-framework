@@ -18,12 +18,6 @@ namespace Safety
         public bool link_ok = true, estop_pressed;
     }
 
-    /*public sealed class SafetyConfig {
-        public double ssm_stop_m = 2.0, ssm_slowdown_m = 5.0, obstacle_stop_m = 1.0, geofence_margin_m = 0.5;
-        public double max_roll_deg = 20, max_pitch_deg = 20;
-        public bool failstop_on_link_loss = true;
-    }*/
-
     public sealed class SafetyResult {
         public Decision decision = Decision.Allow;
         public float speed_limit_mps = float.PositiveInfinity;
@@ -31,7 +25,6 @@ namespace Safety
         public List<string> reasons = new();
     }
 
-    // Command dat naar de robot teruggaat (kan uit mediator of chain komen)
     public sealed class RobotCommand {
         public Decision decision = Decision.Allow;
         public float speed_cap_mps = float.PositiveInfinity;
@@ -39,10 +32,5 @@ namespace Safety
         public bool estop = false;
         public List<string> reasons = new();
     }
-
-    // Uitgaande poort naar robot/actuatoren (Unity motion controller of echte robot)
-    //public interface IRobotPort {
-       // void Apply(RobotCommand cmd);
-    //}
 }
 

@@ -38,7 +38,6 @@ namespace Safety
                     tool_enable = true
                 };
                 robotPort?.Apply(cmd);
-                //Debug.Log(cmd);
                 return cmd;
             }
 
@@ -54,7 +53,6 @@ namespace Safety
             };
 
             robotPort?.Apply(routed);
-            //Debug.Log(routed);
             
             return routed;
         }

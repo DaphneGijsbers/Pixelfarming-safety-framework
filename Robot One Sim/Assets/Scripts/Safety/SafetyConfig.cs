@@ -7,7 +7,6 @@ namespace Safety
         public double ssm_stop_m = 2.0;
         public double ssm_slowdown_m = 5.0;
 
-        // << HIER OP 5.0 METER >>
         public double obstacle_stop_m = 5.0;
 
         public double geofence_margin_m = 0.5;

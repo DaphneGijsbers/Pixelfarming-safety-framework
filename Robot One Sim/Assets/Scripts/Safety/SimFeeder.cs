@@ -34,13 +34,7 @@ public class SimFeeder : MonoBehaviour
     {
         var s = BuildSimSnapshot();
 
-        // Debug input naar mediator
-        // Debug.Log($"[SimFeeder] snapshot obstacle={s.nearest_obstacle_m:0.00} m");
-
         RobotCommand cmd = mediator.ProcessSensorData(s);
-
-        // Debug output van mediator
-        // Debug.Log($"[SimFeeder] cmd={cmd.decision} cap={cmd.speed_cap_mps:0.00} estop={cmd.estop} reasons=[{string.Join(",", cmd.reasons)}]");
 
         if (s.nearest_obstacle_m <= cfg.obstacle_stop_m)
             Debug.Log("Obstacle detected 5 meters");

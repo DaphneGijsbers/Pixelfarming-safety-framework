@@ -3,12 +3,6 @@ using UnityEngine.AI;
 
 namespace Safety
 {
-    /// <summary>
-    /// Robot-‘actuator’ + Safety-gate in één component.
-    /// - Ontvangt RobotCommand via Mediator (IRobotPort.Apply).
-    /// - Houdt Stop/EStop gelatcht en een CurrentSpeedCap bij.
-    /// - FieldPatrol leest deze flags/cap en beslist of/hoe er bewogen mag worden.
-    /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Rigidbody))]
     public sealed class Robot : MonoBehaviour, IRobotPort
@@ -20,7 +14,6 @@ namespace Safety
         [Header("Debug")]
         [SerializeField] bool logDebug = true;
 
-        // ===== Safety Gate state (leesbaar voor FieldPatrol) =====
         public bool IsStopped  { get; private set; }    // Safe Stop latch
         public bool IsEStopped { get; private set; }    // Emergency Stop latch
         public float CurrentSpeedCap { get; private set; } = float.PositiveInfinity;
@@ -39,7 +32,6 @@ namespace Safety
             if (agent) defaultAgentSpeed = agent.speed;
         }
 
-        // ===== IRobotPort: wordt door Mediator aangeroepen =====
         public void Apply(RobotCommand cmd)
         {
             if (cmd == null) return;
@@ -80,7 +72,6 @@ namespace Safety
             if (logDebug) Debug.Log("[Robot] ALLOW");
         }
 
-        // Dwing stilstand af zolang gelatcht, voor het geval een ander script toch duwt
         void FixedUpdate()
         {
             if (IsEStopped)
@@ -113,7 +104,6 @@ namespace Safety
             }
             else
             {
-                // Herstel agent defaults als nodig
                 if (agent && defaultAgentSpeed.HasValue)
                 {
                     agent.isStopped = false;

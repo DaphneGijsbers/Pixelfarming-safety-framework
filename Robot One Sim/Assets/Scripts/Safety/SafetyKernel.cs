@@ -15,7 +15,7 @@ namespace Safety
             chain.Add(new HumanHandler());
             chain.Add(new GeofenceHandler());
             chain.Add(new ObstacleHandler());
-            // Voeg hier Stabiliteit / ToolInterlock / Comms etc. toe
+            
             return true;
         }
 
