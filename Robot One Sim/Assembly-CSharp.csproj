@@ -48,18 +48,7 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.2.6f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scripts\Safety\ISafetyKernel.cs" />
-    <Compile Include="Assets\Scripts\Safety\SafetyConfig.cs" />
-    <Compile Include="Assets\Scripts\Safety\Chain.cs" />
-    <Compile Include="Assets\Scripts\Safety\SimFeeder.cs" />
-    <Compile Include="Assets\Scripts\Safety\Mediator.cs" />
-    <Compile Include="Assets\Scripts\Safety\Robot.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
-    <Compile Include="Assets\Scripts\Safety\SafetyTypes.cs" />
-    <Compile Include="Assets\Scripts\Safety\SafetyKernel.cs" />
-    <Compile Include="Assets\Scripts\FieldPatrol.cs" />
-    <Compile Include="Assets\Scripts\Safety\IRobotPort.cs" />
-    <Compile Include="Assets\Scripts\Safety\IMediator.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
@@ -1256,6 +1245,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="Safety.Tests.EditMode.csproj" />
   </ItemGroup>
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
   <ItemGroup>

@@ -1,0 +1,14 @@
+{
+  "name": "Safety.Tests.EditMode",
+  "references": [ "Safety.Runtime" ],
+  "optionalUnityReferences": [],
+  "includePlatforms": [ "Editor" ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "noEngineReferences": false,
+  "testAssemblies": true
+}
