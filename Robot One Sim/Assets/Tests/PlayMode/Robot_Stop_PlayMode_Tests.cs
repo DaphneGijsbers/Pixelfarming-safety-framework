@@ -13,7 +13,7 @@ public class Robot_Stop_PlayMode_Tests
         var rb = go.AddComponent<Rigidbody>(); rb.useGravity = false;
         var robot = go.AddComponent<Robot>();
 
-        rb.linearVelocity = new Vector3(2,0,0); // geef snelheid
+        rb.linearVelocity = new Vector3(2,0,0); 
 
         robot.Apply(new RobotCommand { decision = Decision.Stop });
 
