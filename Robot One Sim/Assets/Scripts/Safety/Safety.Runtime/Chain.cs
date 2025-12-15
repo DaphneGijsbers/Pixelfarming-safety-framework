@@ -24,9 +24,17 @@ namespace Safety
     public sealed class GeofenceHandler : ISafetyHandler {
         public bool Handle(SensorSnapshot s, SafetyResult r, SafetyKernel k) {
             var c = k.Config;
-            if (!s.inside_geofence || s.distance_to_boundary_m < c.geofence_margin_m) {
+            if (!s.inside_geofence || s.distance_to_boundary_m < c.geofence_margin_m) 
+            {
                 r.decision = Decision.Stop; r.actions.Add("ToolDisable"); r.reasons.Add("Geofence");
                 return true;
+            }
+             if (s.distance_to_boundary_m <= c.geofence_warn_m && r.decision == Decision.Allow)
+            {
+                r.decision = Decision.SlowDown;
+                r.speed_limit_mps = 0.5f;   
+                r.reasons.Add("GeofenceNear");
+            
             }
             return false;
         }
